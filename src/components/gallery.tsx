@@ -157,7 +157,7 @@ const Gallery = () => {
         ))}
       </div>
 
-      {filteredData.length === 0 && (
+      {!loading && filteredData.length === 0 && (
         <div className="text-red-500 text-center">
           {searchQuery.length > 0
             ? "No search results found"

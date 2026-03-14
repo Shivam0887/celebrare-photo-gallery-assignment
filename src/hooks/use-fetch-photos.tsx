@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 
 export interface Photo {
   id: string;
@@ -13,41 +13,65 @@ interface Props {
   page?: number;
 }
 
-type UseFetchPhotos = {
+interface State {
   data: Photo[];
   loading: boolean;
   error: unknown | null;
+}
+
+interface FetchActions {
   cancelFetch: () => void;
   retryFetch: () => void;
+}
+
+type Action =
+  | { type: "SET_PHOTOS"; payload: Photo[] }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: unknown | null };
+
+const API_URL = "https://picsum.photos/v2/list?limit=30";
+
+const reducer = (state: State, action: Action) => {
+  switch (action.type) {
+    case "SET_PHOTOS":
+      return { ...state, data: action.payload };
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    default:
+      return state;
+  }
 };
 
-export const useFetchPhotos = ({ page = 1 }: Props): UseFetchPhotos => {
-  const [data, setData] = useState<Photo[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<unknown | null>(null);
+export const useFetchPhotos = ({ page = 1 }: Props): State & FetchActions => {
+  const [state, dispatch] = useReducer(reducer, {
+    data: [],
+    loading: false,
+    error: null,
+  });
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchPhotos = useCallback(async () => {
     abortControllerRef.current = new AbortController();
 
-    setLoading(true);
-    setError(null);
+    dispatch({ type: "SET_LOADING", payload: true });
+    dispatch({ type: "SET_ERROR", payload: null });
     try {
-      const response = await fetch(
-        `https://picsum.photos/v2/list?limit=30&page=${page}`,
-        { signal: abortControllerRef.current.signal },
-      );
+      const response = await fetch(`${API_URL}&page=${page}`, {
+        signal: abortControllerRef.current.signal,
+      });
       const newPhotos = await response.json();
-      setData(newPhotos);
+      dispatch({ type: "SET_PHOTOS", payload: newPhotos });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Fetch aborted");
         return;
       }
-      setError(error);
+      dispatch({ type: "SET_ERROR", payload: error });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   }, [page]);
 
@@ -59,5 +83,5 @@ export const useFetchPhotos = ({ page = 1 }: Props): UseFetchPhotos => {
     abortControllerRef.current?.abort();
   }, []);
 
-  return { data, loading, error, cancelFetch, retryFetch: fetchPhotos };
+  return { ...state, cancelFetch, retryFetch: fetchPhotos };
 };
