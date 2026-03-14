@@ -1,5 +1,5 @@
 import useDebounce from "../hooks/use-debounce";
-import { useFetchPhotos } from "../hooks/use-fetch-photos";
+import { useFetchPhotos, type Photo } from "../hooks/use-fetch-photos";
 import { useCallback, useEffect, useState, useMemo, useReducer } from "react";
 
 const INITIAL_PAGE = 1;
@@ -36,6 +36,7 @@ const Gallery = () => {
     new Set<string>(),
   );
 
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFavourites, setShowFavourites] = useState(false);
 
@@ -44,6 +45,11 @@ const Gallery = () => {
   const { data, loading, error, cancelFetch, retryFetch } = useFetchPhotos({
     page,
   });
+
+  // Accumulate photos and prevent duplicates (solves Strict Mode issue)
+  useEffect(() => {
+    setAllPhotos((prev) => [...prev, ...data]);
+  }, [data]);
 
   useEffect(() => {
     const storedFavPhotos = localStorage.getItem("favPhotos");
@@ -70,17 +76,16 @@ const Gallery = () => {
   }, []);
 
   // Optimization: use useMemo to avoid recalculating the filtered array on every render
-  // unless the data, searchQuery, or showFavourites change. This saves computation and prevents
-  // the need for a separate useState + useEffect pattern.
+  // unless the data, searchQuery, or showFavourites change.
   const filteredData = useMemo(() => {
-    return data.filter((photo) => {
+    return allPhotos.filter((photo) => {
       const matchesSearch = photo.author
         .toLowerCase()
         .includes(debouncedSearchQuery.toLowerCase());
       const matchesFavourites = showFavourites ? favPhotos.has(photo.id) : true;
       return matchesSearch && matchesFavourites;
     });
-  }, [data, debouncedSearchQuery, showFavourites, favPhotos]);
+  }, [allPhotos, debouncedSearchQuery, showFavourites, favPhotos]);
 
   return (
     <div className="space-y-6 mb-10">
@@ -152,12 +157,14 @@ const Gallery = () => {
         ))}
       </div>
 
-      {filteredData.length === 0 && searchQuery.length > 0 && (
-        <div className="text-red-500 text-center">No search results found</div>
-      )}
-
-      {filteredData.length === 0 && showFavourites && (
-        <div className="text-red-500 text-center">No photos found</div>
+      {filteredData.length === 0 && (
+        <div className="text-red-500 text-center">
+          {searchQuery.length > 0
+            ? "No search results found"
+            : showFavourites
+              ? "No photos found in favourites"
+              : "No photos found"}
+        </div>
       )}
 
       {loading ? (
@@ -184,7 +191,8 @@ const Gallery = () => {
         </div>
       ) : (
         filteredData.length > 0 &&
-        !showFavourites && (
+        !showFavourites &&
+        searchQuery.length === 0 && (
           <button
             onClick={() => setPage(page + 1)}
             className="bg-primary text-primary-foreground px-6 py-4 rounded mx-auto mb-10 block"

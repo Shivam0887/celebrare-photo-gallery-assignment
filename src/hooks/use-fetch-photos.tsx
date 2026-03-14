@@ -39,7 +39,7 @@ export const useFetchPhotos = ({ page = 1 }: Props): UseFetchPhotos => {
         { signal: abortControllerRef.current.signal },
       );
       const newPhotos = await response.json();
-      setData((prev) => [...prev, ...newPhotos]);
+      setData(newPhotos);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Fetch aborted");
