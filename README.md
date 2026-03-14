@@ -1,75 +1,71 @@
-# React + TypeScript + Vite
+# Celebrare Photo Gallery
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive, high-performance photo gallery web application built with React, TypeScript, and Vite, consuming the Picsum Photos API.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Infinite Scrolling / Pagination**: Click "Load More" to fetch additional photos from the API. New photos append seamlessly to the grid.
+- **Search by Author**: Live search filtering dynamically updates the grid to only show photos by authors matching the query.
+- **Favourites & Persistence**: Toggle heart icons to favourite photos. Favourites are persisted in `localStorage` so they remain across page reloads.
+- **Filter Favourites**: Toggle "Show Favourites Only" to instantly filter the view to your hand-picked selection.
+- **Fully Responsive**: Grid adapts cleanly to all devices (desktop: 4 columns, tablet: 2 columns, mobile: 1 column).
+- **Graceful Error Handling**: Loading states, empty states ("No photos found"), and robust API error recovery logic.
 
-## React Compiler
+## Technical Optimizations
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+This project implements specific architectural optimizations to ensure peak performance:
 
-Note: This will impact Vite dev & build performances.
+- **State Management**: Complex boolean states (Favourites) are managed predictably using `useReducer` as opposed to scattered `useState` hooks.
+- **`useCallback` Caching**: Event handlers passed down to mapped child elements (`handleFav`) and effect dependencies (`cancelFetch`) are wrapped in `useCallback` to maintain referential equality across renders, preventing needless child component reconciliation.
+- **`useMemo` Derived State**: Filtering logic runs inside a `useMemo` block. This prevents the anti-pattern of maintaining duplicate state variables via `useEffect`. Filtering only runs when the underlying data, search query, or filter toggle explicitly change.
+- **Image Performance**:
+  - Automatically fetches downsized thumbnails from the API instead of multi-megabyte source images.
+  - Implements `srcSet` and `sizes` attributes (`w` descriptors) to serve appropriately sized images to high-density (Retina) mobile screens and large desktop monitors dynamically.
+  - Uses `loading="lazy"` to defer offscreen image loading.
+  - Uses `decoding="async"` to prevent image decoding from blocking the main thread.
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Make sure you have Node installed, and use `pnpm` for package management.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Installation
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Running Locally
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Start the Vite development server:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm dev
 ```
+
+Open your browser to `http://localhost:5173`.
+
+### Building for Production
+
+Compile TypeScript and build the static assets:
+
+```bash
+pnpm build
+```
+
+To preview the production build locally:
+
+```bash
+pnpm preview
+```
+
+## Tech Stack
+
+- **Framework**: React 19
+- **Tooling**: Vite, TypeScript
+- **Styling**: Tailwind CSS
+- **Linting**: ESLint
