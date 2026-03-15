@@ -29,6 +29,71 @@ const favouritesReducer = (
   }
 };
 
+const PhotoCard = ({
+  photo,
+  isFav,
+  handleFav,
+}: {
+  photo: Photo;
+  isFav: boolean;
+  handleFav: (id: string) => void;
+}) => {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative hover:scale-105 transition-transform drop-shadow-lg">
+      <div
+        className={`w-full h-60 rounded-lg overflow-hidden ${
+          loaded ? "bg-transparent" : "bg-muted animate-pulse"
+        }`}
+      >
+        <img
+          loading="lazy"
+          decoding="async"
+          width={400}
+          height={400}
+          src={`https://picsum.photos/id/${photo.id}/500/500`}
+          srcSet={`https://picsum.photos/id/${photo.id}/400/400 400w, https://picsum.photos/id/${photo.id}/800/800 800w, https://picsum.photos/id/${photo.id}/1200/1200 1200w`}
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          alt={photo.author}
+          className={`w-full h-full object-cover transition-all duration-700 ease-in-out ${
+            loaded ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-2xl scale-110"
+          }`}
+          onLoad={() => setLoaded(true)}
+        />
+      </div>
+
+      <div className="absolute left-2 top-2">
+        <span className="bg-primary px-2 py-1 rounded-full text-primary-foreground text-sm">
+          {photo.author}
+        </span>
+      </div>
+
+      <div className="absolute bottom-2 right-2">
+        <button
+          onClick={() => handleFav(photo.id)}
+          className="bg-secondary px-2 py-1 rounded-full cursor-pointer text-sm text-secondary-foreground"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke={isFav ? "red" : "currentColor"}
+            fill={isFav ? "red" : "none"}
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Gallery = () => {
   const [page, setPage] = useState(INITIAL_PAGE);
   const [favPhotos, dispatchFav] = useReducer(
@@ -109,51 +174,13 @@ const Gallery = () => {
         </label>
       </div>
       <div className="grid lg:grid-cols-4 md:grid-cols-2 grid-cols-1 gap-4">
-        {filteredData.map(({ author, id }) => (
-          <div
-            key={id}
-            className="relative hover:scale-105 transition-transform drop-shadow-lg"
-          >
-            <img
-              loading="lazy"
-              decoding="async"
-              width={400}
-              height={400}
-              src={`https://picsum.photos/id/${id}/500/500`}
-              srcSet={`https://picsum.photos/id/${id}/400/400 400w, https://picsum.photos/id/${id}/800/800 800w, https://picsum.photos/id/${id}/1200/1200 1200w`}
-              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              alt={author}
-              className="object-cover rounded-lg"
-            />
-
-            <div className="absolute left-2 top-2">
-              <span className="bg-primary px-2 py-1 rounded-full text-primary-foreground text-sm">
-                {author}
-              </span>
-            </div>
-
-            <div className="absolute bottom-2 right-2">
-              <button
-                onClick={() => handleFav(id)}
-                className={`bg-secondary px-2 py-1 rounded-full cursor-pointer text-sm text-secondary-foreground`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke={favPhotos.has(id) ? "red" : "currentColor"}
-                  fill={favPhotos.has(id) ? "red" : "none"}
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
+        {filteredData.map((photo) => (
+          <PhotoCard
+            key={photo.id}
+            photo={photo}
+            isFav={favPhotos.has(photo.id)}
+            handleFav={handleFav}
+          />
         ))}
       </div>
 
